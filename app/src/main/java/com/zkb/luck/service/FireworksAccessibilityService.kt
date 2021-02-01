@@ -13,10 +13,10 @@ import android.view.accessibility.AccessibilityNodeInfo
  * Date:2021/1/29
  */
 class FireworksAccessibilityService : AccessibilityService() {
-
     private val TAG="kang"
     @Volatile private var count=0
-    private var maxSendMessageCount=3
+    @Volatile private var running = false
+    @Volatile private var maxSendMessageCount=3
     private var isStart=false;
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
@@ -39,8 +39,9 @@ class FireworksAccessibilityService : AccessibilityService() {
     }
 
 
-
-    @Volatile private var running = false
+    /**
+     * 奇怪拿不到聊天记录文本，难道text是绘制出来的？
+     */
     private fun listenerCmd(){
         if(running) return
         val list= rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/awv")
@@ -60,25 +61,33 @@ class FireworksAccessibilityService : AccessibilityService() {
         if(count>maxSendMessageCount) return
         Log.d(TAG,"startFireworks:")
 
+        //寻找输入框
         val  editText= findInput() ?: return
 
         val arguments = Bundle()
+        //输入框中输入礼花
         arguments.putCharSequence(
             AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
             "[庆祝]"
         )
         editText.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
 
+        //寻找发送按钮
         val sendBtn=findSendButton() ?: return
 
+        //判断是否发送成功！
         val isSendSuccess= sendBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         if(isSendSuccess){
+            //成功就进入循环发送消息
             sendMsg(sendBtn)
            return
         }
 
     }
 
+    /**
+     * 发送消息
+     */
     @Synchronized  private  fun sendMsg(sendBtn : AccessibilityNodeInfo?){
         if(running) return
         Log.d(TAG,"startFireworks: //进入循环"+count)
@@ -93,8 +102,11 @@ class FireworksAccessibilityService : AccessibilityService() {
         count=0
         running=false;
     }
-    private fun findSendButton(): AccessibilityNodeInfo? {
 
+    /**
+     * 查找发送消息按钮
+     */
+    private fun findSendButton(): AccessibilityNodeInfo? {
         val sendButton=  rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/ay5")
         if(sendButton.isNotEmpty()){
 
@@ -104,12 +116,15 @@ class FireworksAccessibilityService : AccessibilityService() {
                     return it
                 }
             }
-
         }
 
         return null
 
     }
+
+    /**
+     * 查找输入框
+     */
     private fun  findInput():AccessibilityNodeInfo?{
        val input=  rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/auj")
         if(input.isNotEmpty()){
