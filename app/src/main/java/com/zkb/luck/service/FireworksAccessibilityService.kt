@@ -1,10 +1,13 @@
 package com.zkb.luck.service
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.zkb.luck.R
 
 /**
  * fireworks
@@ -15,7 +18,6 @@ import android.view.accessibility.AccessibilityNodeInfo
 class FireworksAccessibilityService : AccessibilityService() {
     private val TAG="kang"
     @Volatile private var count=0
-
     /**
      * 0 默认
      * 1 处理中
@@ -23,6 +25,7 @@ class FireworksAccessibilityService : AccessibilityService() {
      */
     @Volatile private var runningType = 0
     @Volatile private var maxSendMessageCount=3
+    @Volatile private var sleepTime=1000
     private var isStart=false;
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
@@ -68,8 +71,11 @@ class FireworksAccessibilityService : AccessibilityService() {
 
     @Synchronized  private fun  startFireworks(){
         if(runningType!=0) return
-        if(count>maxSendMessageCount) return
-        Log.d(TAG,"startFireworks:")
+        if(count>maxSendMessageCount) {
+            Log.d(TAG,"---------------stop-----:")
+            return
+        }
+
 
         runningType=1
         //寻找输入框
@@ -112,17 +118,23 @@ class FireworksAccessibilityService : AccessibilityService() {
      private  fun sendMsg(sendBtn : AccessibilityNodeInfo?){
 
         if(runningType==2) return
+
+        if(count>=maxSendMessageCount) {
+            Log.d(TAG,"---------------stop-----:")
+            return
+        }
+
         Log.d(TAG,"startFireworks: //进入循环"+count)
         runningType=2
         //进入循环
         while (count<maxSendMessageCount){
-            Thread.sleep(1000)
+            Thread.sleep(sleepTime.toLong())
             sendBtn?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             Log.d(TAG,"startFireworks: //ing"+count)
             count++
         }
         Log.d(TAG,"startFireworks: //结束"+count)
-        count=0//可以用注释这里，到达次数就自动结束。
+      //  count=0//可以用注释这里，到达次数就自动结束。
         runningType=0;
     }
 
@@ -161,6 +173,17 @@ class FireworksAccessibilityService : AccessibilityService() {
         return null
     }
 
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+
+
+        val info = getSharedPreferences("info",Context.MODE_PRIVATE)
+
+        sleepTime= info.getInt("edtSecond",2)*1000
+        maxSendMessageCount=info.getInt("edtMsgCount",10)
+        Log.d(TAG, "onServiceConnected:$maxSendMessageCount")
+
+        }
 
     override fun onInterrupt() {
 
