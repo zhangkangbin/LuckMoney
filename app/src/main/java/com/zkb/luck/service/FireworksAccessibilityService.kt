@@ -70,7 +70,7 @@ class FireworksAccessibilityService : AccessibilityService() {
     }
 
     @Synchronized  private fun  startFireworks(){
-        if(runningType!=0) return
+
         if(count>maxSendMessageCount) {
             Log.d(TAG,"---------------stop-----:")
             return
@@ -129,9 +129,29 @@ class FireworksAccessibilityService : AccessibilityService() {
         //进入循环
         while (count<maxSendMessageCount){
             Thread.sleep(sleepTime.toLong())
-            sendBtn?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            Log.d(TAG,"startFireworks: //ing"+count)
-            count++
+
+            val isSuccess=sendBtn?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            Log.d(TAG, "startFireworks: //ing$count--- $isSuccess")
+
+            if(isSuccess!!){
+                count++
+            }
+            val arguments = Bundle()
+            //输入框中输入礼花
+            arguments.putCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                "[庆祝]"
+            )
+            val  editText= findInput()
+
+            if(editText == null){
+                runningType=0
+                return
+            }
+
+            editText.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+
+
         }
         Log.d(TAG,"startFireworks: //结束"+count)
       //  count=0//可以用注释这里，到达次数就自动结束。
