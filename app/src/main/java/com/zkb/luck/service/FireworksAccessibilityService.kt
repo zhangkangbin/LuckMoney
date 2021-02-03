@@ -31,18 +31,13 @@ class FireworksAccessibilityService : AccessibilityService() {
 
         when (event?.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-               // find()
                 if(runningType!=0) return
-             //   listenerCmd()
+                startFireworks();
                 Log.d(TAG,"AccessibilityEvent WINDOW_STATE change:")
             }
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-
                 if(runningType!=0) return
-
                 Log.d(TAG,"AccessibilityEvent 内容change:")
-               // listenerCmd()
-              //  if(!isStart) return
                 startFireworks();
             }
         }
@@ -163,16 +158,15 @@ class FireworksAccessibilityService : AccessibilityService() {
      */
     private fun findSendButton(): AccessibilityNodeInfo? {
         val sendButton=  rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/ay5")
-        if(sendButton.isNotEmpty()){
-
-            sendButton.forEach {
-                if(it.className=="android.widget.Button"){
-                    Log.d(TAG,"found send button!")
-                    return it
-                }
+        if(sendButton.isNullOrEmpty()){
+            return null
+        }
+        sendButton.forEach {
+            if(it.className=="android.widget.Button"){
+                Log.d(TAG,"found send button!")
+                return it
             }
         }
-
         return null
 
     }
@@ -182,21 +176,24 @@ class FireworksAccessibilityService : AccessibilityService() {
      */
     private fun  findInput():AccessibilityNodeInfo?{
        val input=  rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/auj")
-        if(input.isNotEmpty()){
-
-            if(input[input.size-1].className != "android.widget.EditText"){
-                return null
-            }
-
-            return  input[input.size-1]
+        if(input.isNullOrEmpty()){
+            return null
         }
-        return null
+
+        if(input[input.size-1].className != "android.widget.EditText"){
+            return null
+        }
+
+        return  input[input.size-1]
+
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
 
-
+        /**
+         * 读取配置
+         */
         val info = getSharedPreferences("info",Context.MODE_PRIVATE)
 
         sleepTime= info.getInt("edtSecond",2)*1000
