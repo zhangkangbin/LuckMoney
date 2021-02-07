@@ -17,7 +17,7 @@ import com.zkb.luck.R
  */
 class FireworksAccessibilityService : AccessibilityService() {
     private val TAG="kang"
-    @Volatile private var count=0
+    @Volatile private var count=1
     /**
      * 0 默认
      * 1 处理中
@@ -25,17 +25,29 @@ class FireworksAccessibilityService : AccessibilityService() {
      */
     @Volatile private var runningType = 0
     @Volatile private var maxSendMessageCount=3
+
+    /**
+     * 默认最多发送条数
+     */
+    @Volatile private var defaultMaxSendMessageCount=5
     @Volatile private var sleepTime=1000
     private var isStart=false;
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
         when (event?.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+
+                listenerInputCmd();
+                if(!isStart) return
                 if(runningType!=0) return
+
                 startFireworks();
                 Log.d(TAG,"AccessibilityEvent WINDOW_STATE change:")
             }
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+
+                listenerInputCmd()
+                if(!isStart) return
                 if(runningType!=0) return
                 Log.d(TAG,"AccessibilityEvent 内容change:")
                 startFireworks();
@@ -43,7 +55,30 @@ class FireworksAccessibilityService : AccessibilityService() {
         }
 
     }
+    @Synchronized private fun listenerInputCmd(){
 
+       if(isStart) return
+
+        val  editText= findInput() ?: return
+
+        if(editText.text.isNullOrEmpty()) return
+
+        if("开始放烟花啦" != editText.text.toString()){
+            Log.d(TAG,"AccessibilityEvent editText1:"+editText.text)
+            return
+        }
+        Log.d(TAG,"AccessibilityEvent editText2:"+editText.text)
+        //寻找发送按钮
+        val sendBtn= findSendButton() ?: return
+
+        //把消息发出去，然后开始！
+        val isSuccess=sendBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+
+        if(!isSuccess) return
+
+        isStart=true
+        // Log.d(TAG,"AccessibilityEvent editText2:"+editText.text)
+    }
 
     /**
      * 奇怪拿不到聊天记录文本，难道text是绘制出来的？
@@ -96,7 +131,7 @@ class FireworksAccessibilityService : AccessibilityService() {
             runningType=0
             return
         }
-
+        if(!isStart) return
         //判断是否发送成功！
         val isSendSuccess= sendBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         if(isSendSuccess){
@@ -123,6 +158,8 @@ class FireworksAccessibilityService : AccessibilityService() {
         runningType=2
         //进入循环
         while (count<maxSendMessageCount){
+
+            if(!isStart) return
             Thread.sleep(sleepTime.toLong())
 
             val isSuccess=sendBtn?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
@@ -149,8 +186,9 @@ class FireworksAccessibilityService : AccessibilityService() {
 
         }
         Log.d(TAG,"startFireworks: //结束"+count)
-      //  count=0//可以用注释这里，到达次数就自动结束。
+        count=0//可以用注释这里，到达次数就自动结束。
         runningType=0;
+        isStart=false//停止,接着继续监控命令
     }
 
     /**
@@ -196,8 +234,8 @@ class FireworksAccessibilityService : AccessibilityService() {
          */
         val info = getSharedPreferences("info",Context.MODE_PRIVATE)
 
-        sleepTime= info.getInt("edtSecond",2)*1000
-        maxSendMessageCount=info.getInt("edtMsgCount",10)
+        sleepTime= info.getInt("edtSecond",2)*100
+        maxSendMessageCount=info.getInt("edtMsgCount",defaultMaxSendMessageCount)
         Log.d(TAG, "onServiceConnected:$maxSendMessageCount")
 
         }
