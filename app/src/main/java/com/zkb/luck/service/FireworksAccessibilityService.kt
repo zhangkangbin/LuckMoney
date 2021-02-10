@@ -4,10 +4,8 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import com.zkb.luck.R
 
 /**
  * fireworks
@@ -55,6 +53,10 @@ class FireworksAccessibilityService : AccessibilityService() {
         }
 
     }
+
+    /**
+     * 监听输入框，把输入框文字作为命令。
+     */
     @Synchronized private fun listenerInputCmd(){
 
        if(isStart) return
@@ -80,24 +82,7 @@ class FireworksAccessibilityService : AccessibilityService() {
         // Log.d(TAG,"AccessibilityEvent editText2:"+editText.text)
     }
 
-    /**
-     * 奇怪拿不到聊天记录文本，难道text是绘制出来的？
-     */
-    private fun listenerCmd(){
-       // if(running) return
-        val list= rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/awv")
-            ?: return
 
-        if(list.isEmpty()) return
-
-        val last=list.last();
-
-        if(last!=null){
-            isStart=true;
-            //last
-            Log.d(TAG,"last:"+last.text)
-        }
-    }
 
     @Synchronized  private fun  startFireworks(){
 
@@ -149,6 +134,7 @@ class FireworksAccessibilityService : AccessibilityService() {
 
         if(runningType==2) return
 
+        //最大次数
         if(count>=maxSendMessageCount) {
             Log.d(TAG,"---------------stop-----:")
             return
@@ -186,6 +172,15 @@ class FireworksAccessibilityService : AccessibilityService() {
 
         }
         Log.d(TAG,"startFireworks: //结束"+count)
+        //重置参数
+        reSet()
+
+    }
+
+    /**
+     * 重置参数
+     */
+    private fun  reSet(){
         count=0//可以用注释这里，到达次数就自动结束。
         runningType=0;
         isStart=false//停止,接着继续监控命令
@@ -195,11 +190,13 @@ class FireworksAccessibilityService : AccessibilityService() {
      * 查找发送消息按钮
      */
     private fun findSendButton(): AccessibilityNodeInfo? {
+        //消息发送按钮的节点。
         val sendButton=  rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/ay5")
         if(sendButton.isNullOrEmpty()){
             return null
         }
         sendButton.forEach {
+            //匹配button
             if(it.className=="android.widget.Button"){
                 Log.d(TAG,"found send button!")
                 return it
@@ -243,4 +240,23 @@ class FireworksAccessibilityService : AccessibilityService() {
     override fun onInterrupt() {
 
     }
+
+    /*    *//**
+     * 奇怪拿不到聊天记录文本，难道text是绘制出来的？求解一下
+     *//*
+    private fun listenerCmd(){
+       // if(running) return
+        val list= rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/awv")
+            ?: return
+
+        if(list.isEmpty()) return
+
+        val last=list.last();
+
+        if(last!=null){
+            isStart=true;
+            //last
+            Log.d(TAG,"last:"+last.text)
+        }
+    }*/
 }
