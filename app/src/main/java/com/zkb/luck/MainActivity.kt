@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity()  {
     override fun onResume() {
         super.onResume()
         if(isServiceEnabled()){
-            openBtn?.text = "已开启"
+            openBtn?.text = "服务已开启"
         }
     }
     private fun  initView(){
@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity()  {
         openBtn=  findViewById<Button>(R.id.open)
 
         if(isServiceEnabled()){
-            openBtn?.text = "已开启"
+            openBtn?.text = "服务已开启"
         }
         openBtn?.setOnClickListener {
             val accessibleIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
@@ -43,13 +43,21 @@ class MainActivity : AppCompatActivity()  {
         val edtSecond=findViewById<EditText>(R.id.edtSecond)
         val edtMsgCount=findViewById<EditText>(R.id.edtMsgCount)
 
-        val edit = getSharedPreferences("info",Context.MODE_PRIVATE).edit()
+
+
+        val info=getSharedPreferences("info",Context.MODE_PRIVATE)
+        val edit = info.edit()
+        val sleepTime= info.getFloat("edtSecond",2f)
+        edtSecond.setText(sleepTime.toString())
+
+        val maxSendMessageCount=info.getInt("edtMsgCount",10)
+        edtMsgCount.setText(maxSendMessageCount.toString())
 
         findViewById<View>(R.id.saveInfo).setOnClickListener {
 
             if(edtSecond.text.isNullOrEmpty()) return@setOnClickListener
             if(edtMsgCount.text.isNullOrEmpty()) return@setOnClickListener
-            edit.putInt("edtSecond",edtSecond.text.toString().toInt())
+            edit.putFloat("edtSecond",edtSecond.text.toString().toFloat())
             edit.putInt("edtMsgCount",edtMsgCount.text.toString().toInt())
             edit.apply()
 
