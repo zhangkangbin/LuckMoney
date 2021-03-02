@@ -241,23 +241,4 @@ class DouBanAccessibilityService : AccessibilityService() {
 
     }
 
-    /*    */
-    /**
-     * 奇怪拿不到聊天记录文本，难道text是绘制出来的？求解一下
-     *//*
-    private fun listenerCmd(){
-       // if(running) return
-        val list= rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/awv")
-            ?: return
-
-        if(list.isEmpty()) return
-
-        val last=list.last();
-
-        if(last!=null){
-            isStart=true;
-            //last
-            Log.d(TAG,"last:"+last.text)
-        }
-    }*/
 }
